@@ -1,10 +1,11 @@
+
 // ---------- FILE: WebinarDashboard.jsx ----------
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import './WebinarDashboard.css';
 // import './Adminpage';
 import './Common.css';
 import { GraduationCap, ArrowLeft} from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Document, Packer, Paragraph, Table, TableCell, TableRow, TextRun, AlignmentType } from 'docx';
 import { saveAs } from 'file-saver';
 
@@ -230,22 +231,34 @@ function DashboardShell() {
   const [currentPhase, setCurrentPhase] = useState(null);
   const [phaseLoading, setPhaseLoading] = useState(true);
   const [userEmail, setUserEmail] = useState('');
+  const [userName, setUserName] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [coordinators, setCoordinators] = useState([]);
   const [phaseDetails, setPhaseDetails] = useState({});
+  const [searchParams] = useSearchParams();
 
   // When phase changes reset page
   useEffect(() => setPage(1), [selectedPhase, view]);
 
-  // Extract user email from URL and check admin status
+  // Extract user email from URL params and check admin status
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const encryptedEmail = urlParams.get('email');
-    if (encryptedEmail) {
+    const encodedEmail = searchParams.get('email');
+    if (encodedEmail) {
       try {
-        const email = atob(encryptedEmail); // Decode base64
+        const email = atob(encodedEmail); // Decode base64
         setUserEmail(email);
         localStorage.setItem('userEmail', email);
+        // Fetch user details
+        fetch(`/api/member-by-email?email=${encodeURIComponent(email)}`)
+          .then(response => response.json())
+          .then(memberData => {
+            if (memberData.found) {
+              setUserName(memberData.name);
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching user details:', error);
+          });
         // Check if user is admin (specific email only)
         fetch(`/api/coordinators`)
           .then(response => response.json())
@@ -266,7 +279,7 @@ function DashboardShell() {
         localStorage.setItem('isAdmin', 'false');
       }
     }
-  }, []);
+  }, [searchParams]);
 
   // Fetch current phase
   useEffect(() => {
@@ -304,7 +317,7 @@ function DashboardShell() {
 
   // Fetch dynamic phase data from API and update conducted and speakers based on webinars and speakers collections
   useEffect(() => {
-    if (!seedPhases[selectedPhase]) {
+    if (!selectedPhase || !seedPhases[selectedPhase]) {
       setLoading(true);
       // Fetch webinars and speakers to calculate conducted count and speaker count
       Promise.all([
@@ -359,24 +372,29 @@ function DashboardShell() {
           fetch(`/api/dashboard-stats?phase=${selectedPhase}`)
             .then(response => response.json())
             .then(data => {
-              const domainMappings = {
-                'fullstack_development': 'Full Stack Development (IT department)',
-                'artificial_intelligence': 'Artificial Intelligence & Data Science (AD & DS department)',
-                'cyber_security': 'Cloud Computing (CSE department)',
-                'data_science': 'Artificial Intelligence & Data Science (AD & DS department)',
-                'cloud_computing': 'Cloud Computing (CSE department)',
-                'embedded_systems': 'Embedded Systems (ECE department)',
-                'devops': 'Structural Engineering (CIVIL department)',
-                'robotic_and_automation': 'Robotic and Automation (MECH department)',
-                'electrical_power_system': 'Electrical Power System (EEE department)'
-              };
-              const updatedDomains = data.domains.map(domain => {
-                const domainKey = Object.keys(domainMappings).find(key => domainMappings[key] === domain.name);
-                const conducted = conductedByDomain[domainKey] || 0;
-                const newSpeakers = speakersByDomain[domainKey] || 0;
-                return { ...domain, conducted, newSpeakers };
-              });
-              setDynamicPhaseData({ ...data, domains: updatedDomains });
+              if (data && data.domains) {
+                const domainMappings = {
+                  'fullstack_development': 'Full Stack Development (IT department)',
+                  'artificial_intelligence': 'Artificial Intelligence & Data Science (AD & DS department)',
+                  'cyber_security': 'Cloud Computing (CSE department)',
+                  'data_science': 'Artificial Intelligence & Data Science (AD & DS department)',
+                  'cloud_computing': 'Cloud Computing (CSE department)',
+                  'embedded_systems': 'Embedded Systems (ECE department)',
+                  'devops': 'Structural Engineering (CIVIL department)',
+                  'robotic_and_automation': 'Robotic and Automation (MECH department)',
+                  'electrical_power_system': 'Electrical Power System (EEE department)'
+                };
+                const updatedDomains = data.domains.map(domain => {
+                  const domainKey = Object.keys(domainMappings).find(key => domainMappings[key] === domain.name);
+                  const conducted = conductedByDomain[domainKey] || 0;
+                  const newSpeakers = speakersByDomain[domainKey] || 0;
+                  return { ...domain, conducted, newSpeakers };
+                });
+                setDynamicPhaseData({ ...data, domains: updatedDomains });
+              } else {
+                console.error('Invalid data structure from dashboard-stats API');
+                setDynamicPhaseData(null);
+              }
               setLoading(false);
             })
             .catch(error => {
@@ -753,7 +771,7 @@ function DashboardShell() {
               <GraduationCap className="header-icon" />
             </div>
 <h1 className="form-title text-3xl font-extrabold">
-  Webinar Dashboard
+  WELCOME BACK!! {userName || 'User'} 👋
 </h1>
           </div>
         <header className="wb-header">
@@ -965,7 +983,7 @@ function DashboardShell() {
   <h3 className="qa-title">Quick Actions</h3>
 
   <div className="qa-grid">
-  <div className="qa-card" onClick={() => navigate("/student-request")} style={{ cursor: "pointer" }}>
+  <div className="qa-card" onClick={() => navigate(`/student-request/${btoa(userEmail)}`)} style={{ cursor: "pointer" }}>
       <div className="qa-icon">📄</div>
       <h4 className="qa-heading">Student Request Form</h4>
       <span className="qa-tag">Request</span>
@@ -973,7 +991,7 @@ function DashboardShell() {
         Submit student requests for webinars, topics, domains and speaker preferences.
       </p>
     </div>
-    <div className="qa-card" onClick={() => navigate("/webinar-events")} style={{ cursor: "pointer" }}>
+    <div className="qa-card" onClick={() => navigate(`/webinar-events/${btoa(userEmail)}`)} style={{ cursor: "pointer" }}>
         <div className="qa-icon">👩🏼‍🎓</div>
         <h4 className="qa-heading">Webinar Events</h4>
         <span className="qa-tag">view</span>
@@ -982,7 +1000,7 @@ function DashboardShell() {
         </p>
     </div>
   {(coordinators.some(coord => coord.email === userEmail) || isAdmin) && (
-    <div className="qa-card" onClick={() => navigate("/speaker-assignment")} style={{ cursor: "pointer" }}>
+    <div className="qa-card" onClick={() => navigate(`/speaker-assignment/${btoa(userEmail)}`)} style={{ cursor: "pointer" }}>
       <div className="qa-icon">🧑‍🏫</div>
       <h4 className="qa-heading">Speaker Assignment Form</h4>
       <span className="qa-tag">Assignment</span>
@@ -992,7 +1010,7 @@ function DashboardShell() {
     </div>
   )}
   {(coordinators.some(coord => coord.email === userEmail) || isAdmin) && (
-    <div className="qa-card" onClick={() => navigate("/requested-topic-approval")} style={{ cursor: "pointer" }}>
+    <div className="qa-card" onClick={() => navigate(`/requested-topic-approval/${btoa(userEmail)}`)} style={{ cursor: "pointer" }}>
         <div className="qa-icon">✅</div>
         <h4 className="qa-heading">Requested Topic Approval</h4>
         <span className="qa-tag">Approval</span>
@@ -1001,7 +1019,7 @@ function DashboardShell() {
         </p>
     </div>
   )}
-  <div className="qa-card" onClick={() => navigate("/alumni-feedback")} style={{ cursor: "pointer" }}>
+  <div className="qa-card" onClick={() => navigate(`/alumni-feedback/${btoa(userEmail)}`)} style={{ cursor: "pointer" }}>
       <div className="qa-icon">🏫</div>
       <h4 className="qa-heading">Alumni Feedback Form</h4>
       <span className="qa-tag">Feedback</span>

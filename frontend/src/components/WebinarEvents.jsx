@@ -634,6 +634,13 @@ function signatureCell(title) {
     fetchCoordinators();
   }, []);
 
+  // Update registrationEmail when userEmail is set
+  useEffect(() => {
+    if (userEmail) {
+      setRegistrationEmail(userEmail);
+    }
+  }, [userEmail]);
+
   // const webinarsData = {
   //   january: [
   //     {
@@ -718,7 +725,7 @@ function signatureCell(title) {
         {/* Upload Button - Only visible to coordinators and admins */}
         {canUpload && (
                   <button
-          onClick={() => navigate(`/webinar-details/${webinar._id}`, { state: { webinar } })}
+          onClick={() => navigate(`/webinar-details/${webinar._id}/${encodeURIComponent(userEmail)}`, { state: { webinar } })}
           className="absolute top-3 right-3 bg-purple-600 text-white p-2 rounded-lg hover:bg-purple-700 transition-colors z-10"
           title="View Webinar Details"
         >
@@ -831,7 +838,7 @@ function signatureCell(title) {
                     webinar.title
                   )}&speaker=${encodeURIComponent(
                     webinar.speaker.name
-                  )}&phaseId=${currentPhase.phaseId}`
+                  )}&phaseId=${currentPhase.phaseId}&email=${encodeURIComponent(userEmail)}`
                 );
               }}
               className={`submit-btn text-sm py-3 px-4 flex-1 ${

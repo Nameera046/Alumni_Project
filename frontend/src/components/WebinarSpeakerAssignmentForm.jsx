@@ -5,13 +5,13 @@ import './Common.css';
 import Popup from './Popup';
 
 const typeOptions = [
-  { value: "Full Stack Development (IT department)", label: "FULL STACK DEVELOPMENT" },
-  { value: "Cloud Computing (CSE department)", label: "CLOUD COMPUTING" },
-  { value: "Artificial Intelligence & Data Science (AI & DS department)", label: "ARTIFICIAL INTELLIGENCE & DATA SCIENCE" },
-  { value: "Robotic and Automation (MECH department)", label: "ROBOTIC AND AUTOMATION" },
-  { value: "Electrical Power System (EEE department)", label: "ELECTRICAL POWER SYSTEM" },
-  { value: "Embedded Systems (ECE department)", label: "EMBEDDED SYSTEMS" },
-  { value: "Structural Engineering (CIVIL department)", label: "STRUCTURAL ENGINEERING" }
+  { value: "Full Stack Development", label: "FULL STACK DEVELOPMENT" },
+  { value: "Cloud Computing", label: "CLOUD COMPUTING" },
+  { value: "Artificial Intelligence & Data Science", label: "ARTIFICIAL INTELLIGENCE & DATA SCIENCE" },
+  { value: "Robotic and Automation", label: "ROBOTIC AND AUTOMATION" },
+  { value: "Electrical Power System", label: "ELECTRICAL POWER SYSTEM" },
+  { value: "Embedded Systems", label: "EMBEDDED SYSTEMS" },
+  { value: "Structural Engineering", label: "STRUCTURAL ENGINEERING" }
 ];
 
 export default function WebinarSpeakerAssignmentForm() {
@@ -83,7 +83,7 @@ export default function WebinarSpeakerAssignmentForm() {
   useEffect(() => {
     if (currentPhase && currentPhase.domains) {
       const phaseDomains = currentPhase.domains.map(domain => ({
-        value: `${domain.domain} (${domain.department})`,
+        value: domain.domain,
         label: domain.domain.toUpperCase()
       }));
       setDomains(phaseDomains);

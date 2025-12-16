@@ -20,14 +20,14 @@ function App() {
       <Routes>
          <Route path="/" element={<LoginPage/>} />
         <Route path="/Webinar-Dashboard" element={<WebinarDashboard />} />
-        <Route path="/student-request" element={<StudentRequestForm />} />
-        <Route path="/speaker-assignment" element={<WebinarSpeakerAssignmentForm />} />
-        <Route path="/webinar-events" element={<WebinarEvents />} />
-        <Route path="/webinar-details/:id" element={<WebinarDetails />} />
-        <Route path="/webinar-details-upload/:id" element={<WebinarCompletedDetailsForm />} />
-        <Route path="/alumni-feedback" element={<WebinarAlumniFeedbackForm />} />
+        <Route path="/student-request/:email" element={<StudentRequestForm />} />
+        <Route path="/speaker-assignment/:email" element={<WebinarSpeakerAssignmentForm />} />
+        <Route path="/webinar-events/:email" element={<WebinarEvents />} />
+        <Route path="/webinar-details/:id/:encodedUserEmail" element={<WebinarDetails />} />
+        <Route path="/webinar-details-upload/:id/:encodedUserEmail" element={<WebinarCompletedDetailsForm />} />
+        <Route path="/alumni-feedback/:email" element={<WebinarAlumniFeedbackForm />} />
         <Route path="/student-feedback" element={<WebinarStudentFeedbackForm />} />
-        <Route path="/requested-topic-approval" element={<TopicApprovalForm />} />
+        <Route path="/requested-topic-approval/:email" element={<TopicApprovalForm />} />
         <Route path="/webinar-circular" element={<WebinarCircular />} />
         <Route path="/student-certificate/:webinarId" element={<WebinarCertificate />} />
         <Route path="/admin" element={<Adminpage />} />

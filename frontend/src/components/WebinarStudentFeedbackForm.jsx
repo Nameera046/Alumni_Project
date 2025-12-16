@@ -52,11 +52,12 @@ export default function WebinarStudentFeedbackForm() {
     fetchMemberDetails();
   }, [formData.email]);
 
-  // Auto-fill webinar, speaker, and phaseId from URL params
+  // Auto-fill webinar, speaker, phaseId, and email from URL params
   useEffect(() => {
     const topic = searchParams.get('topic');
     const speaker = searchParams.get('speaker');
     const phaseId = searchParams.get('phaseId');
+    const email = searchParams.get('email');
 
     if (topic && speaker) {
       setFormData((prev) => ({
@@ -64,6 +65,7 @@ export default function WebinarStudentFeedbackForm() {
         webinar: topic,
         speaker: speaker,
         phaseId: phaseId || "",
+        ...(email && { email: email }),
       }));
     }
   }, [searchParams]);

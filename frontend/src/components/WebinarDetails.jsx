@@ -6,9 +6,10 @@ import { ArrowLeft } from "lucide-react";
 import WebinarCompletedDetailsForm from './WebinarCompletedDetailsForm';
 
 export default function WebinarDetails() {
-  const { id } = useParams();
+  const { id, encodedUserEmail } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const userEmail = decodeURIComponent(encodedUserEmail);
   const [webinar, setWebinar] = useState(location.state?.webinar || null);
   const [registrations, setRegistrations] = useState([]);
   const [feedback, setFeedback] = useState([]);

@@ -1,11 +1,12 @@
 import { User, Mail, GraduationCap, MessageSquare, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import "./Common.css";
 import Popup from './Popup';
 
 const WebinarAlumniFeedbackForm = () => {
   const navigate = useNavigate();
+  const { email: encodedEmail } = useParams();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,6 +23,21 @@ const WebinarAlumniFeedbackForm = () => {
   const [webinars, setWebinars] = useState([]);
   const [webinarsLoading, setWebinarsLoading] = useState(true);
   const [webinarsError, setWebinarsError] = useState(null);
+
+  // Decode email from URL params and set in formData
+  useEffect(() => {
+    if (encodedEmail) {
+      try {
+        const email = atob(encodedEmail);
+        setFormData(prev => ({
+          ...prev,
+          email: email
+        }));
+      } catch (error) {
+        console.error('Error decoding email:', error);
+      }
+    }
+  }, [encodedEmail]);
 
   // Fetch webinars from topic approvals
   useEffect(() => {

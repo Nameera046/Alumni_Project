@@ -10,12 +10,13 @@ import {
   ArrowLeft
 } from 'lucide-react';
 
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Popup from './Popup';
 import './Common.css';
 
 export default function StudentRequestForm() {
   const navigate = useNavigate();
+  const { email: encodedEmail } = useParams();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -34,6 +35,21 @@ export default function StudentRequestForm() {
   const [currentPhase, setCurrentPhase] = useState(null);
   const [phaseLoading, setPhaseLoading] = useState(true);
   const [domainOptions, setDomainOptions] = useState([]);
+
+  // Extract email from URL and set in formData
+  useEffect(() => {
+    if (encodedEmail) {
+      try {
+        const email = atob(encodedEmail);
+        setFormData(prev => ({
+          ...prev,
+          email: email
+        }));
+      } catch (error) {
+        console.error('Error decoding email:', error);
+      }
+    }
+  }, [encodedEmail]);
 
   // -------------------------------------------------
   // 🔥 Auto-fill: Name + Contact + Department by Email
@@ -81,7 +97,7 @@ export default function StudentRequestForm() {
           // Set domain options from the current phase
           if (data.domains && Array.isArray(data.domains)) {
             const options = data.domains.map(domain => ({
-              value: `${domain.domain} (${domain.department} department)`,
+              value: domain.domain,
               label: domain.domain.toUpperCase()
             }));
             setDomainOptions(options);
