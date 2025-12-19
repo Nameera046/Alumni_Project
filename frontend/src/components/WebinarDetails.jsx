@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import './Common.css';
 import { FiBookOpen } from "react-icons/fi";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import WebinarCompletedDetailsForm from './WebinarCompletedDetailsForm';
+import ConfirmationDialog from './ConfirmationDialog';
+import Popup from './Popup';
 
 export default function WebinarDetails() {
   const { id, encodedUserEmail } = useParams();
@@ -16,6 +18,28 @@ export default function WebinarDetails() {
   const [loading, setLoading] = useState(!webinar);
   const [error, setError] = useState(null);
   const [activeView, setActiveView] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [popup, setPopup] = useState(null);
+
+  const handleDeleteWebinar = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/webinars/${id}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        setPopup({ message: 'Webinar deleted successfully!', type: 'success' });
+        setTimeout(() => {
+          navigate('/webinar-events');
+        }, 2000);
+      } else {
+        setPopup({ message: 'Failed to delete webinar.', type: 'error' });
+      }
+    } catch (error) {
+      console.error('Error deleting webinar:', error);
+      setPopup({ message: 'An error occurred while deleting the webinar.', type: 'error' });
+    }
+    setShowDeleteDialog(false);
+  };
 
   const renderContent = () => {
     switch (activeView) {
@@ -28,20 +52,19 @@ export default function WebinarDetails() {
 
             <div>
                 <table style={{ width: "1280px", borderCollapse: "collapse" }}>
-    <thead>
-      <tr style={{ backgroundColor: "#eee", paddingTop: "15px", paddingBottom: "15px" }}>
-        {/* <th style={{  width: "177px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Phase ID</th> */}
-        {/* <th style={{  width: "350px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Domain</th> */}
-        {/* <th style={{  width: "400px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Webinar Topic</th> */}
-        <th style={{  width: "250px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Name</th>
-        <th style={{  width: "250px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Email</th>
-        {/* <th style={{  width: "230px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Speaker Phone Number </th> */}
-        <th style={{  width: "180px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student  Department </th>
-        <th style={{  width: "180px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Batch</th>
-        {/* <th style={{  width: "300px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>City</th> */}
-      </tr>
-    </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <thead>
+                  <tr style={{ backgroundColor: "#eee", paddingTop: "15px", paddingBottom: "15px" }}>
+                    {/* <th style={{  width: "177px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Phase ID</th> */}
+                    {/* <th style={{  width: "350px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Domain</th> */}
+                    {/* <th style={{  width: "400px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Webinar Topic</th> */}
+                    <th style={{  width: "250px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Name</th>
+                    <th style={{  width: "250px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Email</th>
+                    <th style={{  width: "180px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student  Department </th>
+                    <th style={{  width: "180px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Batch</th>
+                    {/* <th style={{  width: "300px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>City</th> */}
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200 py-12">
                   {registrations.length === 0 ? (
                     <tr>
                       <td colSpan="4" className="px-6 py-4 text-center text-sm text-gray-500">
@@ -51,16 +74,16 @@ export default function WebinarDetails() {
                   ) : (
                     registrations.map((registration, index) => (
                       <tr key={registration._id || index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-8 py-12 whitespace-nowrap text-lg font-medium text-gray-900 text-center">
                           {registration.name}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-8 py-12 whitespace-nowrap text-lg text-gray-500 text-center">
                           {registration.email}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-8 py-12 whitespace-nowrap text-lg text-gray-500 text-center">
                           {registration.department}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-8 py-12 whitespace-nowrap text-lg text-gray-500 text-center">
                           {registration.batch}
                         </td>
                       </tr>
@@ -80,15 +103,15 @@ export default function WebinarDetails() {
 
             <div>
                 <table style={{ width: "1280px", borderCollapse: "collapse" }}>
-    <thead>
-      <tr style={{ backgroundColor: "#eee", paddingTop: "15px", paddingBottom: "15px" }}>
-        <th style={{  width: "250px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Name</th>
-        <th style={{  width: "250px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Email</th>
-        <th style={{  width: "180px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Department</th>
-        <th style={{  width: "180px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Batch</th>
-        <th style={{  width: "420px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Feedback</th>
-      </tr>
-    </thead>
+                <thead>
+                  <tr style={{ backgroundColor: "#eee", paddingTop: "15px", paddingBottom: "15px" }}>
+                    <th style={{  width: "250px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Name</th>
+                    <th style={{  width: "250px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Email</th>
+                    <th style={{  width: "180px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Department</th>
+                    <th style={{  width: "180px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Student Batch</th>
+                    <th style={{  width: "420px",padding: "10px", border: "1px solid #ddd", textAlign: "center" }}>Feedback</th>
+                  </tr>
+                </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {feedback.length === 0 ? (
                     <tr>
@@ -99,19 +122,19 @@ export default function WebinarDetails() {
                   ) : (
                     feedback.map((item, index) => (
                       <tr key={item._id || index} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-6 whitespace-nowrap text-lg font-medium text-gray-900 text-center mb-2">
                           {item.student?.name || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-6 whitespace-nowrap text-lg text-gray-500 text-center">
                           {item.student?.email || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-6 whitespace-nowrap text-lg text-gray-500 text-center">
                           {item.student?.department || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-6 whitespace-nowrap text-lg text-gray-500 text-center">
                           {item.student?.batch || 'N/A'}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
+                        <td className="px-6 py-6 text-sm text-gray-500 text-center">
                           {item.feedback || 'No feedback provided'}
                         </td>
                       </tr>
@@ -169,6 +192,45 @@ export default function WebinarDetails() {
     };
 
     fetchRegistrations();
+
+    // Fetch feedback with member details (student feedback only)
+    const fetchFeedback = async () => {
+      try {
+        // First get webinar details to get the topic
+        let webinarTopic = webinar?.topic;
+        if (!webinarTopic) {
+          const webinarResponse = await fetch(`http://localhost:5000/api/webinars/${id}`);
+          if (webinarResponse.ok) {
+            const webinarData = await webinarResponse.json();
+            webinarTopic = webinarData.topic;
+          }
+        }
+
+        // Fetch student feedback by webinar topic
+        const studentFeedbackResponse = await fetch(`http://localhost:5000/api/student-feedback/webinar/${encodeURIComponent(webinarTopic)}`);
+        let studentFeedbackData = [];
+        if (studentFeedbackResponse.ok) {
+          studentFeedbackData = await studentFeedbackResponse.json();
+        }
+
+        // Format feedback data
+        const formattedFeedback = studentFeedbackData.map((item) => ({
+          ...item,
+          student: {
+            name: item.name,
+            email: item.email,
+            department: item.department,
+            batch: item.batch
+          }
+        }));
+
+        setFeedback(formattedFeedback);
+      } catch (err) {
+        console.error('Error fetching feedback:', err);
+      }
+    };
+
+    fetchFeedback();
   }, [id, webinar]);
 
   if (loading) {
@@ -224,6 +286,29 @@ export default function WebinarDetails() {
             </p>
           </div>
 
+          {/* Delete Button */}
+          <div style={{ textAlign: 'right', margin: '20px 60px' }}>
+            <button
+              className="delete-btn"
+              onClick={() => setShowDeleteDialog(true)}
+              style={{
+                backgroundColor: '#dc2626',
+                color: 'white',
+                border: 'none',
+                padding: '10px 15px',
+                borderRadius: '13px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontSize: '16px'
+              }}
+            >
+              <Trash2 size={16} />
+              Delete Webinar
+            </button>
+          </div>
+
           {/* Buttons Section */}
           <div className="admin-buttons">
             <button className="submit1-btn" onClick={() => setActiveView('registration')}>Webinar Registration Details</button>
@@ -239,6 +324,21 @@ export default function WebinarDetails() {
           <p className="form-footer">Designed with 💜 for Alumni Network</p>
         </div>
       </div>
+
+      <ConfirmationDialog
+        message="Are you sure you want to delete this webinar? This action cannot be undone."
+        onConfirm={handleDeleteWebinar}
+        onCancel={() => setShowDeleteDialog(false)}
+        isOpen={showDeleteDialog}
+      />
+
+      {popup && (
+        <Popup
+          message={popup.message}
+          type={popup.type}
+          onClose={() => setPopup(null)}
+        />
+      )}
     </div>
   );
 }

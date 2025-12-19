@@ -161,8 +161,18 @@ router.get('/member-by-email', async (req, res) => {
     }
     // Extract department using the existing logic
     const department = getDepartmentFromMember(member);
-    // Extract batch from member data
-    const batch = member.basic?.batch || member.batch || '';
+    // Extract batch from member data (end year from education details)
+    const endYear = member.education_details?.[0]?.end_year;
+    let batch = '';
+    if (typeof endYear === 'string' && endYear.toLowerCase() !== 'present') {
+      const year = parseInt(endYear);
+      if (!isNaN(year)) batch = year.toString();
+    } else if (typeof endYear === 'number') {
+      batch = endYear.toString();
+    }
+    if (!batch) {
+      batch = member.basic?.batch || member.batch || '';
+    }
     // Extract contact number from multiple possible paths
     const contact_no = member.contact_details?.mobile ||
                       member.contact_details?.phone ||

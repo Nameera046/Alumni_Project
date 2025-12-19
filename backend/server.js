@@ -283,6 +283,22 @@ app.put('/api/webinars/:id/complete', async (req, res) => {
   }
 });
 
+// Delete a webinar by ID
+app.delete('/api/webinars/:id', async (req, res) => {
+  try {
+    const webinar = await WebinarWebinar.findByIdAndDelete(req.params.id);
+    if (!webinar) {
+      return res.status(404).json({ error: 'Webinar not found' });
+    }
+    // Also delete related registrations
+    await WebinarRegister.deleteMany({ webinarId: req.params.id });
+    res.json({ message: 'Webinar deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting webinar:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Check certificate eligibility
 app.get('/api/check-certificate-eligibility', async (req, res) => {
   try {
@@ -493,15 +509,27 @@ app.get('/api/dashboard-stats', async (req, res) => {
         totalSpeakers: 0,
         newSpeakers: 0,
         requestedTopics: 0,
-        approvedTopics: 0
+        conductedTopics: 0
       }));
 
-      // Calculate requested and approved topics per domain
+      // Calculate requested and conducted topics per domain
       domains.forEach((domain, index) => {
         const shortDomain = reverseDomainMappings[domain];
         const domainApprovals = topicApprovals.filter(approval => approval.domain === shortDomain);
-        domainStats[index].requestedTopics = domainApprovals.reduce((sum, approval) => sum + (approval.total_requested || 0), 0);
-        domainStats[index].approvedTopics = domainApprovals.filter(approval => approval.approval === 'Approved').length;
+        domainStats[index].requestedTopics = domainApprovals.filter(approval => approval.approval === 'On Hold').reduce((sum, approval) => sum + (approval.total_requested || 0), 0);
+        const approvedApprovals = domainApprovals.filter(approval => approval.approval === 'Approved');
+        let conductedCount = 0;
+        approvedApprovals.forEach(approval => {
+          // Check if there's a matching webinar with attendedCount > 0
+          const matchingWebinar = webinars.find(webinar => {
+            const similarity = stringSimilarity.compareTwoStrings(approval.topic, webinar.topic);
+            return similarity > 0.6 && webinar.attendedCount && webinar.attendedCount > 0;
+          });
+          if (matchingWebinar) {
+            conductedCount += 1;
+          }
+        });
+        domainStats[index].conductedTopics = conductedCount;
       });
 
       // Calculate conducted and postponed

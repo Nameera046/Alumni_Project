@@ -5,7 +5,7 @@ export default function WebinarCircular({ date = " ", data = [], month = "", onC
   return (
     <div className="circular-container">
       <div className="header">
-        {/* <h2>NATIONAL ENGINEERING COLLEGE</h2> */}
+        <h2>NATIONAL ENGINEERING COLLEGE</h2>
         <p>(An Autonomous Institution, Affiliated to Anna University - Chennai)</p>
         <p>K.R. NAGAR, KOVILPATTI – 628 503</p>
         <h3>NEC ALUMNI ASSOCIATION</h3>

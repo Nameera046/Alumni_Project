@@ -370,7 +370,12 @@ function DashboardShell() {
           });
           // Fetch dashboard stats and update conducted and newSpeakers
           fetch(`/api/dashboard-stats?phase=${selectedPhase}`)
-            .then(response => response.json())
+            .then(response => {
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+              }
+              return response.json();
+            })
             .then(data => {
               if (data && data.domains) {
                 const domainMappings = {
@@ -965,8 +970,8 @@ function DashboardShell() {
                     <div className="value">{typeof selectedDomain.requestedTopics === 'number' ? selectedDomain.requestedTopics : selectedDomain.requestedTopics?.length || 0}</div>
                   </div>
                   <div className="stat">
-                    <div className="label">Approved Topics</div>
-                    <div className="value">{typeof selectedDomain.approvedTopics === 'number' ? selectedDomain.approvedTopics : selectedDomain.approvedTopics?.length || 0}</div>
+                    <div className="label">Conducted Topics</div>
+                    <div className="value">{typeof selectedDomain.conductedTopics === 'number' ? selectedDomain.conductedTopics : selectedDomain.conductedTopics?.length || 0}</div>
                   </div>
                 </div>
                 )}

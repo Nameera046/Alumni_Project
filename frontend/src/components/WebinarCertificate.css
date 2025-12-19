@@ -130,3 +130,121 @@
   width: 130px;     /* adjust size */
   height: 120px;
 }
+
+@media (max-width: 768px) {
+  .certificate-wrapper {
+    padding: 10px;
+  }
+
+  .certificate-container {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    min-height: 400px;
+    padding: 20px;
+    border-width: 4px;
+  }
+
+  .certificate-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .nec-logo {
+    width: 60px;
+    height: 60px;
+    margin-right: 0;
+  }
+
+  .college-name {
+    font-size: 24px;
+  }
+
+  .college-address {
+    font-size: 16px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+
+  .name-field {
+    font-size: 24px;
+  }
+
+  .program {
+    font-size: 16px;
+  }
+
+  .text {
+    font-size: 16px;
+  }
+
+  .signatures {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+  }
+
+  .signature-item {
+    margin-left: 0;
+  }
+
+  .signature-image {
+    width: 100px;
+    height: 30px;
+  }
+
+  .signature-label {
+    font-size: 18px;
+  }
+
+  .download-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+  }
+
+  .left-logo {
+    width: 80px;
+    height: 100px;
+  }
+
+  .right-logo {
+    width: 100px;
+    height: 90px;
+  }
+}
+
+@media (max-width: 480px) {
+  .certificate-container {
+    max-width: 100%;
+    padding: 15px;
+  }
+
+  .college-name {
+    font-size: 20px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .name-field {
+    font-size: 20px;
+  }
+
+  .program,
+  .text {
+    font-size: 14px;
+  }
+
+  .signature-label {
+    font-size: 16px;
+  }
+
+  .download-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+  }
+}
