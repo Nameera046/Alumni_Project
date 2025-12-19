@@ -35,7 +35,15 @@ function getDepartmentFromMember(member) {
     member.department,
     member.dept,
     member.contact_details?.department,
-    member.contact_details?.dept
+    member.contact_details?.dept,
+    member.education_details?.[0]?.department,
+    member.education_details?.[0]?.dept,
+    member.education_details?.[0]?.course,
+    member.education_details?.[0]?.branch,
+    member.academic_details?.department,
+    member.academic_details?.dept,
+    member.academic_details?.course,
+    member.academic_details?.branch
   ];
   for (const c of candidates) {
     if (!c) continue;

@@ -315,100 +315,24 @@ function DashboardShell() {
     fetchPhaseDetails();
   }, []);
 
-  // Fetch dynamic phase data from API and update conducted and speakers based on webinars and speakers collections
+  // Fetch dynamic phase data from API
   useEffect(() => {
     if (!selectedPhase || !seedPhases[selectedPhase]) {
       setLoading(true);
-      // Fetch webinars and speakers to calculate conducted count and speaker count
-      Promise.all([
-        fetch('/api/webinars').then(response => response.json()),
-        fetch('/api/speakers').then(response => response.json())
-      ])
-        .then(([webinars, speakers]) => {
-          const phaseRange = getPhaseDateRange(selectedPhase);
-          const phaseWebinars = webinars.filter(webinar => {
-            const webinarDate = new Date(webinar.webinarDate);
-            return webinarDate >= phaseRange.start && webinarDate <= phaseRange.end;
-          });
-          const conductedWebinars = phaseWebinars.filter(webinar => webinar.attendedCount && webinar.attendedCount > 0);
-          // Group conducted webinars by domain key
-          const conductedByDomain = {};
-          conductedWebinars.forEach(webinar => {
-            let domainKey;
-            if (webinar.domain.includes('Artificial Intelligence')) domainKey = 'artificial_intelligence';
-            else if (webinar.domain.includes('Embedded Systems')) domainKey = 'embedded_systems';
-            else if (webinar.domain.includes('Structural Engineering')) domainKey = 'devops';
-            else if (webinar.domain.includes('Cloud Computing')) domainKey = 'cloud_computing';
-            else if (webinar.domain.includes('Robotic and Automation')) domainKey = 'robotic_and_automation';
-            else if (webinar.domain.includes('Electrical Power System')) domainKey = 'electrical_power_system';
-            else if (webinar.domain.includes('Full Stack Development')) domainKey = 'fullstack_development';
-            else if (webinar.domain.includes('Data Science')) domainKey = 'data_science';
-            else if (webinar.domain.includes('Cyber Security')) domainKey = 'cyber_security';
-            if (domainKey) {
-              conductedByDomain[domainKey] = (conductedByDomain[domainKey] || 0) + 1;
-            }
-          });
-          // Group speakers by domain key
-          const speakersByDomain = {};
-          const phaseId = parseInt(selectedPhase.split(' ')[1]);
-          speakers.forEach(speaker => {
-            if (parseInt(speaker.phaseId) === phaseId) {
-              let domainKey;
-              if (speaker.domain.includes('Artificial Intelligence')) domainKey = 'artificial_intelligence';
-              else if (speaker.domain.includes('Embedded Systems')) domainKey = 'embedded_systems';
-              else if (speaker.domain.includes('Structural Engineering')) domainKey = 'devops';
-              else if (speaker.domain.includes('Cloud Computing')) domainKey = 'cloud_computing';
-              else if (speaker.domain.includes('Robotic and Automation')) domainKey = 'robotic_and_automation';
-              else if (speaker.domain.includes('Electrical Power System')) domainKey = 'electrical_power_system';
-              else if (speaker.domain.includes('Full Stack Development')) domainKey = 'fullstack_development';
-              else if (speaker.domain.includes('Data Science')) domainKey = 'data_science';
-              else if (speaker.domain.includes('Cyber Security')) domainKey = 'cyber_security';
-              if (domainKey) {
-                speakersByDomain[domainKey] = (speakersByDomain[domainKey] || 0) + 1;
-              }
-            }
-          });
-          // Fetch dashboard stats and update conducted and newSpeakers
-          fetch(`/api/dashboard-stats?phase=${selectedPhase}`)
-            .then(response => {
-              if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-              }
-              return response.json();
-            })
-            .then(data => {
-              if (data && data.domains) {
-                const domainMappings = {
-                  'fullstack_development': 'Full Stack Development (IT department)',
-                  'artificial_intelligence': 'Artificial Intelligence & Data Science (AD & DS department)',
-                  'cyber_security': 'Cloud Computing (CSE department)',
-                  'data_science': 'Artificial Intelligence & Data Science (AD & DS department)',
-                  'cloud_computing': 'Cloud Computing (CSE department)',
-                  'embedded_systems': 'Embedded Systems (ECE department)',
-                  'devops': 'Structural Engineering (CIVIL department)',
-                  'robotic_and_automation': 'Robotic and Automation (MECH department)',
-                  'electrical_power_system': 'Electrical Power System (EEE department)'
-                };
-                const updatedDomains = data.domains.map(domain => {
-                  const domainKey = Object.keys(domainMappings).find(key => domainMappings[key] === domain.name);
-                  const conducted = conductedByDomain[domainKey] || 0;
-                  const newSpeakers = speakersByDomain[domainKey] || 0;
-                  return { ...domain, conducted, newSpeakers };
-                });
-                setDynamicPhaseData({ ...data, domains: updatedDomains });
-              } else {
-                console.error('Invalid data structure from dashboard-stats API');
-                setDynamicPhaseData(null);
-              }
-              setLoading(false);
-            })
-            .catch(error => {
-              console.error(`Error fetching ${selectedPhase} data:`, error);
-              setLoading(false);
-            });
+      // Fetch dashboard stats directly from API
+      fetch(`/api/dashboard-stats?phase=${selectedPhase}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.domains) {
+            setDynamicPhaseData(data);
+          } else {
+            console.error('Invalid data structure from dashboard-stats API');
+            setDynamicPhaseData(null);
+          }
+          setLoading(false);
         })
         .catch(error => {
-          console.error('Error fetching webinars or speakers:', error);
+          console.error(`Error fetching ${selectedPhase} data:`, error);
           setLoading(false);
         });
     } else {
@@ -970,8 +894,8 @@ function DashboardShell() {
                     <div className="value">{typeof selectedDomain.requestedTopics === 'number' ? selectedDomain.requestedTopics : selectedDomain.requestedTopics?.length || 0}</div>
                   </div>
                   <div className="stat">
-                    <div className="label">Conducted Topics</div>
-                    <div className="value">{typeof selectedDomain.conductedTopics === 'number' ? selectedDomain.conductedTopics : selectedDomain.conductedTopics?.length || 0}</div>
+                    <div className="label">Approved Topics</div>
+                    <div className="value">{typeof selectedDomain.approvedTopics === 'number' ? selectedDomain.approvedTopics : selectedDomain.approvedTopics?.length || 0}</div>
                   </div>
                 </div>
                 )}

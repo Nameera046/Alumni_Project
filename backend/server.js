@@ -83,13 +83,12 @@ const WebinarCoordinator = webinarConnection.model('Coordinator', CoordinatorMod
 // Domain mappings for display
 const domainMappings = {
   'FULL STACK DEVELOPMENT (IT)': 'Full Stack Development (IT department)',
-  'ARTIFICIAL INTELLIGENCE & DATA SCIENCE (AD & DS)': 'Artificial Intelligence & Data Science (AD & DS department)',
+  'ARTIFICIAL INTELLIGENCE & DATA SCIENCE (AI & DS)': 'Artificial Intelligence & Data Science (AI & DS department)',
   'CLOUD COMPUTING (CSE)': 'Cloud Computing (CSE department)',
   'ROBOTIC AND AUTOMATION (MECH)': 'Robotic and Automation (MECH department)',
   'ELECTRICAL POWER SYSTEM (EEE)': 'Electrical Power System (EEE department)',
   'EMBEDDED SYSTEMS (ECE)': 'Embedded Systems (ECE department)',
-  'STRUCTURAL ENGINEERING (CIVIL)': 'Structural Engineering (CIVIL department)',
-  'Robotic and Automation (MECH department)': 'Robotic and Automation (MECH department)'
+  'STRUCTURAL ENGINEERING (CIVIL)': 'Structural Engineering (CIVIL department)'
 };
 const WebinarAlumniFeedback = webinarConnection.model('AlumniFeedback', AlumniFeedback.schema, 'AlumniFeedback');
 const WebinarPhaseModel = webinarConnection.model('WebinarPhase', WebinarPhase.schema, 'webinarphase');
@@ -98,6 +97,25 @@ const WebinarPhaseModel = webinarConnection.model('WebinarPhase', WebinarPhase.s
 const reverseDomainMappings = Object.fromEntries(
   Object.entries(domainMappings).map(([key, value]) => [value, key])
 );
+
+// Function to normalize domain to short form
+function getShortDomain(domain) {
+  if (reverseDomainMappings[domain]) return reverseDomainMappings[domain];
+  if (domainMappings[domain]) return domain;
+  // Try to remove trailing (dept) code if present
+  const match = domain.match(/^(.*)\s*\([^)]+\)$/);
+  if (match) {
+    const stripped = match[1].trim();
+    if (reverseDomainMappings[stripped]) return reverseDomainMappings[stripped];
+  }
+  return domain; // unknown domain, return as is
+}
+
+// Function to get the first word of a domain for comparison (case insensitive)
+function getFirstWord(domain) {
+  if (!domain) return '';
+  return domain.split(' ')[0].toLowerCase();
+}
 
 // Attach models to app locals for use in routes
 app.locals.Member = Member;
@@ -283,22 +301,6 @@ app.put('/api/webinars/:id/complete', async (req, res) => {
   }
 });
 
-// Delete a webinar by ID
-app.delete('/api/webinars/:id', async (req, res) => {
-  try {
-    const webinar = await WebinarWebinar.findByIdAndDelete(req.params.id);
-    if (!webinar) {
-      return res.status(404).json({ error: 'Webinar not found' });
-    }
-    // Also delete related registrations
-    await WebinarRegister.deleteMany({ webinarId: req.params.id });
-    res.json({ message: 'Webinar deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting webinar:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 // Check certificate eligibility
 app.get('/api/check-certificate-eligibility', async (req, res) => {
   try {
@@ -438,137 +440,190 @@ app.get('/api/dashboard-stats', async (req, res) => {
       return res.status(400).json({ error: 'Phase parameter is required' });
     }
 
-    const domains = ['Full Stack Development (IT department)', 'Artificial Intelligence & Data Science (AD & DS department)', 'Cloud Computing (CSE department)', 'Robotic and Automation (MECH department)', 'Electrical Power System (EEE department)', 'Embedded Systems (ECE department)', 'Structural Engineering (CIVIL department)'];
+    // Extract phaseId from phase string (e.g., "Phase 6" -> 6)
+    const phaseId = parseInt(phase.replace('Phase ', ''));
+    if (isNaN(phaseId)) {
+      return res.status(400).json({ error: 'Invalid phase format' });
+    }
 
-    if (phase === 'Phase 6') {
-      // Phase 6: Dec 2025 - Mar 2026
-      const phaseStart = new Date('2025-12-01');
-      const phaseEnd = new Date('2026-03-31');
+    // Get phase details from database
+    const phaseData = await WebinarPhaseModel.findOne({ phaseId });
+    if (!phaseData) {
+      return res.status(404).json({ error: 'Phase not found' });
+    }
 
-      // Get all webinars in Phase 6
-      const webinars = await WebinarWebinar.find({
-        webinarDate: { $gte: phaseStart, $lte: phaseEnd }
-      }).populate('speaker', 'name designation department batch companyName');
+    const phaseStart = new Date(phaseData.startingDate);
+    const phaseEnd = new Date(phaseData.endingDate);
 
-      // Get all speakers for Phase 6 to calculate total speakers per domain
-      const allSpeakers = await WebinarSpeaker.find({ phaseId: 6 });
+    const domains = phaseData.domains.map(d => getShortDomain(d.domain));
 
-      // Get topic approval data, generate if none exist
-      let topicApprovals = await WebinarTopicApproval.find();
+    // Get all webinars in the specified phase
+    const webinars = await WebinarWebinar.find({
+      webinarDate: { $gte: phaseStart, $lte: phaseEnd }
+    }).populate('speaker', 'name designation department batch companyName');
 
-      // If no topic approvals exist, generate them from student requests
-      if (topicApprovals.length === 0) {
-        console.log('No topic approvals found in dashboard-stats, generating from student requests...');
+    // Get all speakers for the specified phase
+    const allSpeakers = await WebinarSpeaker.find({ phaseId });
 
-        // Fetch all student requests
-        const studentRequests = await WebinarStudentRequestForm.find({});
+    // Get topic approval data for the specific phase
+    let topicApprovals = await WebinarTopicApproval.find({ phaseId });
 
-        if (studentRequests.length > 0) {
-          // Group by domain
-          const domainGroups = {};
-          studentRequests.forEach(request => {
+    // Fetch student requests for the specific phase
+    const studentRequests = await WebinarStudentRequestForm.find({ phaseId });
+
+    // If no topic approvals exist for this phase, generate them from student requests for this phase
+    if (topicApprovals.length === 0) {
+      console.log(`No topic approvals found for phase ${phaseId}, generating from student requests...`);
+
+      if (studentRequests.length > 0) {
+        // Group by domain
+        const domainGroups = {};
+        studentRequests.forEach(request => {
+          if (!domainGroups[request.domain]) {
+            domainGroups[request.domain] = [];
+          }
+          domainGroups[request.domain].push(request.topic);
+        });
+
+        // Process each domain
+        const newTopicApprovals = [];
+        for (const [domain, topics] of Object.entries(domainGroups)) {
+          // Group similar topics
+          const groupedTopics = groupTopics(topics);
+          groupedTopics.forEach(group => {
+            const totalRequested = group.length;
+            const topic = group[0]; // Use the first topic as representative
+            newTopicApprovals.push({
+              phaseId,
+              domain,
+              topic,
+              total_requested: totalRequested,
+              approval: 'On Hold'
+            });
+          });
+        }
+
+        // Insert new topic approvals
+        if (newTopicApprovals.length > 0) {
+          await WebinarTopicApproval.insertMany(newTopicApprovals);
+          topicApprovals = newTopicApprovals;
+          console.log(`Generated ${newTopicApprovals.length} topic approvals for phase ${phaseId}`);
+        }
+      }
+    } else {
+      // Check for domains that have student requests but no topic approvals
+      const existingApprovalDomains = new Set(topicApprovals.map(approval => approval.domain));
+      const domainsToGenerate = [];
+      studentRequests.forEach(request => {
+        if (!existingApprovalDomains.has(request.domain)) {
+          if (!domainsToGenerate.includes(request.domain)) {
+            domainsToGenerate.push(request.domain);
+          }
+        }
+      });
+
+      if (domainsToGenerate.length > 0) {
+        console.log(`Generating topic approvals for missing domains in phase ${phaseId}: ${domainsToGenerate.join(', ')}`);
+
+        // Group by domain for these domains
+        const domainGroups = {};
+        studentRequests.forEach(request => {
+          if (domainsToGenerate.includes(request.domain)) {
             if (!domainGroups[request.domain]) {
               domainGroups[request.domain] = [];
             }
             domainGroups[request.domain].push(request.topic);
-          });
-
-          // Process each domain
-          const newTopicApprovals = [];
-          for (const [domain, topics] of Object.entries(domainGroups)) {
-            // Group similar topics
-            const groupedTopics = groupTopics(topics);
-            groupedTopics.forEach(group => {
-              const totalRequested = group.length;
-              const topic = group[0]; // Use the first topic as representative
-              newTopicApprovals.push({
-                domain,
-                topic,
-                total_requested: totalRequested,
-                approval: 'On Hold'
-              });
-            });
-          }
-
-          // Insert new topic approvals
-          if (newTopicApprovals.length > 0) {
-            await WebinarTopicApproval.insertMany(newTopicApprovals);
-            topicApprovals = newTopicApprovals;
-            console.log(`Generated ${newTopicApprovals.length} topic approvals in dashboard-stats`);
-          }
-        }
-      }
-
-      // Initialize domain stats
-      const domainStats = domains.map(domain => ({
-        id: domain.toLowerCase().replace(/\s+/g, '-'),
-        name: domain,
-        planned: 4, // Default 4 webinars planned for Phase 6
-        conducted: 0,
-        postponed: 0,
-        totalSpeakers: 0,
-        newSpeakers: 0,
-        requestedTopics: 0,
-        conductedTopics: 0
-      }));
-
-      // Calculate requested and conducted topics per domain
-      domains.forEach((domain, index) => {
-        const shortDomain = reverseDomainMappings[domain];
-        const domainApprovals = topicApprovals.filter(approval => approval.domain === shortDomain);
-        domainStats[index].requestedTopics = domainApprovals.filter(approval => approval.approval === 'On Hold').reduce((sum, approval) => sum + (approval.total_requested || 0), 0);
-        const approvedApprovals = domainApprovals.filter(approval => approval.approval === 'Approved');
-        let conductedCount = 0;
-        approvedApprovals.forEach(approval => {
-          // Check if there's a matching webinar with attendedCount > 0
-          const matchingWebinar = webinars.find(webinar => {
-            const similarity = stringSimilarity.compareTwoStrings(approval.topic, webinar.topic);
-            return similarity > 0.6 && webinar.attendedCount && webinar.attendedCount > 0;
-          });
-          if (matchingWebinar) {
-            conductedCount += 1;
           }
         });
-        domainStats[index].conductedTopics = conductedCount;
-      });
 
-      // Calculate conducted and postponed
-      const now = new Date();
-      webinars.forEach(webinar => {
-        const domainIndex = domains.indexOf(webinar.domain);
-        if (domainIndex !== -1) {
-          if (webinar.attendedCount && webinar.attendedCount > 0) {
-            // Webinar has been conducted (has attendance data)
-            domainStats[domainIndex].conducted += 1;
-          } else if (webinar.webinarDate <= now) {
-            // Webinar date has passed but no attendance data
-            domainStats[domainIndex].postponed += 1;
-          }
-          // Future webinars are not counted as conducted or postponed
+        // Process each domain
+        const newTopicApprovals = [];
+        for (const [domain, topics] of Object.entries(domainGroups)) {
+          // Group similar topics
+          const groupedTopics = groupTopics(topics);
+          groupedTopics.forEach(group => {
+            const totalRequested = group.length;
+            const topic = group[0]; // Use the first topic as representative
+            newTopicApprovals.push({
+              phaseId,
+              domain,
+              topic,
+              total_requested: totalRequested,
+              approval: 'On Hold'
+            });
+          });
         }
-      });
 
-      // Calculate speakers per domain using mapped domain names
-      domains.forEach((domain, index) => {
-        const dbDomain = reverseDomainMappings[domain];
-        const domainSpeakers = allSpeakers.filter(speaker => speaker.domain === dbDomain);
-        // Count unique speakers by _id to avoid duplicates
-        const uniqueSpeakers = new Set(domainSpeakers.map(speaker => speaker._id.toString()));
-        domainStats[index].totalSpeakers = uniqueSpeakers.size;
-        // For Phase 6, newSpeakers = 0 since these are not "new" speakers but total speakers for the phase
-        domainStats[index].newSpeakers = 0;
-      });
-
-      const result = {
-        months: ['Dec 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026'],
-        domains: domainStats
-      };
-
-      res.json(result);
-    } else {
-      // For other phases, return static data or handle differently
-      res.status(400).json({ error: 'Phase not supported for dynamic data' });
+        // Insert new topic approvals
+        if (newTopicApprovals.length > 0) {
+          await WebinarTopicApproval.insertMany(newTopicApprovals);
+          topicApprovals = [...topicApprovals, ...newTopicApprovals];
+          console.log(`Generated ${newTopicApprovals.length} topic approvals for missing domains in phase ${phaseId}`);
+        }
+      }
     }
+
+    // Initialize domain stats
+    const domainStats = domains.map(domain => ({
+      id: domain.toLowerCase().replace(/\s+/g, '-'),
+      name: domain,
+      planned: 4, // Default 4 webinars planned per phase
+      conducted: 0,
+      postponed: 0,
+      totalSpeakers: 0,
+      newSpeakers: 0,
+      requestedTopics: 0,
+      approvedTopics: 0
+    }));
+
+    // Calculate requested and approved topics per domain for this phase
+    domains.forEach((domain, index) => {
+      const domainApprovals = topicApprovals.filter(approval => {
+        // Use first word of domain for comparison, ignoring case
+        const domainFirstWord = getFirstWord(domain);
+        const approvalFirstWord = getFirstWord(approval.domain);
+        return domainFirstWord === approvalFirstWord;
+      });
+      domainStats[index].requestedTopics = domainApprovals.length; // Count of times domain appears
+      domainStats[index].approvedTopics = domainApprovals.filter(approval => approval.approval === 'Approved').reduce((sum, approval) => sum + approval.total_requested, 0);
+    });
+
+    // Calculate conducted and postponed
+    const now = new Date();
+    domains.forEach((domain, index) => {
+      const matchingWebinars = webinars.filter(webinar => {
+        const webinarShort = reverseDomainMappings[webinar.domain] || getShortDomain(webinar.domain);
+        return webinarShort === domain;
+      });
+      domainStats[index].conducted = matchingWebinars.filter(w => w.attendedCount > 0).length;
+      domainStats[index].postponed = matchingWebinars.filter(w => w.webinarDate <= now && (!w.attendedCount || w.attendedCount === 0)).length;
+    });
+
+    // Calculate speakers per domain using mapped domain names
+    domains.forEach((domain, index) => {
+      const domainSpeakers = allSpeakers.filter(speaker => getShortDomain(speaker.domain) === domain);
+      // Count unique speakers by _id to avoid duplicates
+      const uniqueSpeakers = new Set(domainSpeakers.map(speaker => speaker._id.toString()));
+      domainStats[index].totalSpeakers = 0; // For dynamic phases, start from 0
+      domainStats[index].newSpeakers = uniqueSpeakers.size; // New speakers for this phase
+    });
+
+    // Generate months array based on phase dates
+    const months = [];
+    const startDate = new Date(phaseStart);
+    const endDate = new Date(phaseEnd);
+
+    while (startDate <= endDate) {
+      months.push(startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+      startDate.setMonth(startDate.getMonth() + 1);
+    }
+
+    const result = {
+      months,
+      domains: domainStats
+    };
+
+    res.json(result);
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
     res.status(500).json({ error: 'Internal server error' });

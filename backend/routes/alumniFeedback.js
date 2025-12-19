@@ -68,6 +68,22 @@ router.post('/alumni-feedback', async (req, res) => {
     // Get the AlumniFeedback model from app locals (webinar connection)
     const AlumniFeedback = req.app.locals.AlumniFeedback;
 
+    // Check if user is registered for this webinar
+    const Webinar = req.app.locals.Webinar;
+    const Register = req.app.locals.Register;
+
+    // Find the webinar by topic to get webinarId
+    const webinar = await Webinar.findOne({ topic: webinarTopic });
+    if (!webinar) {
+      return res.status(400).json({ message: 'Webinar not found' });
+    }
+
+    // Check if user is registered for this webinar
+    const registration = await Register.findOne({ email, webinarId: webinar._id });
+    if (!registration) {
+      return res.status(400).json({ message: 'You must be registered for this webinar to submit feedback' });
+    }
+
     // Check if feedback already exists for this email and webinar topic
     const existingFeedback = await AlumniFeedback.findOne({ email, webinarTopic });
     if (existingFeedback) {

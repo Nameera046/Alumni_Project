@@ -246,11 +246,63 @@
     font-size: 8px;
     min-width: 10px;
     min-height: 10px;
+    width: auto;
+    max-width: 150px;
+    align-self: flex-start;
   }
 
   .back-btn-icon {
     width: 10px;
     height: 10px;
+  }
+
+  /* Hide remove slot X button in assign slot */
+  .remove-slot {
+    display: none;
+  }
+
+  /* Admin buttons in same row on mobile */
+  .admin-buttons {
+    flex-direction: row !important;
+    justify-content: center;
+  }
+
+  /* Delete webinar button mobile - decrease width and align right */
+  .delete-btn {
+    width: auto !important;
+    max-width: 150px !important;
+    margin: 0px 0px 20px 0px!important;
+    font-size: 14px !important;
+    padding: 8px 12px !important;
+  }
+
+  /* Tables mobile - decrease size for mobile phones */
+  .form-card table {
+    font-size: 12px !important;
+    width: 100% !important;
+    table-layout: auto !important;
+  }
+
+  .form-card th,
+  .form-card td {
+    padding: 6px 4px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 80px !important;
+  }
+
+  .form-card th {
+    font-size: 11px !important;
+  }
+
+  .form-card td {
+    font-size: 10px !important;
+  }
+
+  /* Make tables horizontally scrollable on mobile */
+  .form-card {
+    overflow-x: auto !important;
   }
 }
 .back-btn {
@@ -294,70 +346,7 @@
 .grid-spacing {
   gap: 20px;
 }
-@media (max-width: 768px) {
-  .webinar-poster {
-    width: 100% !important;
-    height: auto !important;
-    transform: scale(0.92);
-    padding: 10px;
-    border-radius: 10px;
-  }
 
-  .top-header h1 {
-    font-size: 1.6rem !important;
-  }
-
-  .top-header p {
-    font-size: 0.9rem !important;
-  }
-
-  .logo-row img {
-    width: 55px !important;
-    height: 55px !important;
-  }
-
-  .topic-title {
-    font-size: 1.3rem !important;
-    padding: 0 25px !important;
-  }
-
-  .info-box {
-    width: 85% !important;
-    height: auto !important;
-    padding: 12px !important;
-  }
-
-  .info-box p {
-    font-size: 1.2rem !important;
-  }
-
-  .alumni-photo img {
-    width: 150px !important;
-    height: 150px !important;
-  }
-
-  .alumni-details {
-    width: 85% !important;
-    right: 8% !important;
-    height: auto !important;
-    padding: 12px !important;
-  }
-
-  .alumni-details h2 {
-    font-size: 1.3rem !important;
-  }
-
-  .white-bg {
-    width: 200% !important;
-    height: 600px !important;
-    top: 250px !important;
-  }
-
-  .poster-footer img {
-    height: 80px !important;
-    object-fit: cover;
-  }
-}
 .generate-btn {
   width: 17%;
   padding: 1rem;
@@ -529,8 +518,9 @@
 }
 .admin-buttons {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 1rem;
+  justify-content: center;
 }
 
 /* ========== WEBINAR EVENTS MOBILE RESPONSIVE ========== */
@@ -573,16 +563,15 @@
     gap: 1rem;
   }
 
-  /* Poster Container Mobile */
+  /* Poster Container Mobile - Same dimensions as desktop */
   .webinar-grid .form-card .flex-shrink-0 {
-    width: 100% !important;
-    height: auto !important;
-    max-height: 300px;
+    width: 230px !important;
+    height: 352px !important;
   }
 
   .webinar-grid .form-card .flex-shrink-0 .bg-gray-100 {
-    width: 100% !important;
-    height: 250px !important;
+    width: 230px !important;
+    height: 352px !important;
   }
 
   /* Content Area Mobile */
@@ -607,25 +596,29 @@
 
   /* Buttons Mobile */
   .webinar-grid .form-card .flex.gap-2 {
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.5rem;
   }
 
   .webinar-grid .form-card .flex.gap-2 button {
-    width: 100% !important;
+    flex: 1;
     padding: 0.6rem !important;
     font-size: 0.85rem !important;
   }
 
+  .webinar-grid .form-card .mt-1 {
+    margin-top: 0.1rem !important;
+  }
+
   .webinar-grid .form-card .mt-1 button {
-    width: 100% !important;
+    width: 80% !important;
     padding: 0.6rem !important;
     font-size: 0.85rem !important;
   }
 
   /* Generate Button Mobile */
   .generate-btn {
-    width: 100% !important;
+    width: 30% !important;
     padding: 0.8rem !important;
     font-size: 0.9rem !important;
     margin-top: 0.5rem;
@@ -645,6 +638,20 @@
   .webinar-grid .flex.justify-between.items-center button {
     width: 100%;
     margin-top: 0.5rem;
+  }
+
+  /* Eye Icon Button Mobile - Decrease width and ensure right end */
+  .webinar-grid .form-card button.absolute {
+    width: 25px !important;
+    height: 25px !important;
+    padding: 4px !important;
+    right: 10px !important;
+    top: 8px !important;
+  }
+
+  .webinar-grid .form-card button.absolute svg {
+    width: 16px !important;
+    height: 16px !important;
   }
 }
 

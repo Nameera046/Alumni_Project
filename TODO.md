@@ -1,9 +1,11 @@
-# Webinar Details Implementation TODO
+# TODO: Implement Registration Check for Feedback Submissions
 
-## Completed Tasks
-- [x] Add new endpoint `/api/registrations/webinar/:webinarId/details` in server.js to fetch registrations with member details
-- [x] Update WebinarDetails.jsx useEffect to fetch feedback data with member details
-- [x] Test the new endpoint and feedback fetching
-- [x] Verify tables populate dynamically from DB
-- [x] Test the application to ensure no errors
-- [x] Check if feedback data is properly displayed in the table
+## Tasks
+- [x] Modify alumni feedback route to check user registration before allowing feedback
+- [x] Modify student feedback route to check user registration before allowing feedback
+- [x] Test the updated feedback submission logic
+
+## Details
+- Ensure only registered users can submit feedback for a webinar
+- Maintain the existing duplicate feedback prevention per email and webinar
+- Add registration verification by matching email and webinar topic to registration records

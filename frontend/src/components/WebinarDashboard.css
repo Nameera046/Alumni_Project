@@ -180,7 +180,8 @@
 
 .header-right {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 12px;
 }
 
@@ -860,6 +861,16 @@
   .qa-grid {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   }
+
+  /* Decrease phase dropdown width and align right */
+  .phase-select {
+    min-width: 120px;
+    width: auto;
+  }
+
+  .header-right {
+    justify-content: flex-end;
+  }
 }
 
 @media (max-width: 768px) {
@@ -875,28 +886,57 @@
     position: static;
     margin-bottom: 20px;
     transform: none;
+    width: auto;
+    max-width: 150px;
+    align-self: flex-start;
   }
 
   .wb-header {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .header-left {
+    flex: 0 0 auto;
   }
 
   .header-right {
-    flex-direction: column;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 8px;
   }
 
-  .phase-select,
+  .btn-primary {
+    width: 120px;
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .phase-select {
+    width: 100%;
+    max-width: 200px;
+    align-self: flex-end;
+  }
+
   .search {
     width: 100%;
   }
 
   .stats-mini {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .stats-mini > div {
-    min-width: 100%;
+    min-width: 25%;
+    margin: 0;
+    padding: 16px 20px;
+  }
+
+  .webinar-actions button {
+    width: 100px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
   }
 
   .list-cards {
@@ -1052,6 +1092,7 @@
 
   /* Added spacing for buttons */
   .flex button {
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
+    height: 2.5rem;
   }
 }
